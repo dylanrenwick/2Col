@@ -46,76 +46,65 @@ def parse_args(args):
         res[0].append(ord(c));
   return res;
 
+def get_val(valCode, lines, cell):
+  if valCode == 'v':
+    cell.lineNum += 1;
+    return(parse_line(lines, cellHolder(cell.value, cell.lineNum)));
+  elif valCode == '^':
+    return(parse_line(lines, cellHolder(cell.value, cell.lineNum - 1)));
+  elif isint(valCode):
+    return int(valCode);
+
+
 def parse_line(lines, cell):
   l = lines[cell.lineNum];
   if ' ' in l:
     l = l.strip();
   if l.startswith('+'):
     if len(l) > 1:
-      if l[-1] == 'v':
-        cell.lineNum += 1;
-        val = parse_line(lines, cellHolder(cell.value, cell.lineNum));
-        cell.value += int(val) if isint(val) else ord(val[0]);
-      else:
-        cell.value += int(l[-1]) if isint(l[-1]) else ord(l[-1]);
+      val = get_val(l[-1], lines, cell);
+      cell.value += int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
     else:
       cell.value += cell.value;
   elif l.startswith('-'):
     if len(l) > 1:
-      if l[-1] == 'v':
-        cell.lineNum += 1;
-        val = parse_line(lines, cellHolder(cell.value, cell.lineNum));
-        cell.value -= int(val) if isint(val) else ord(val[0]);
-      else:
-        cell.value -= int(l[-1]) if isint(l[-1]) else ord(l[-1]);
+      val = get_val(l[-1], lines, cell);
+      cell.value -= int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
     else:
       cell.value -= cell.value;
   elif l.startswith('*'):
     if len(l) > 1:
-      if l[-1] == 'v':
-        cell.lineNum += 1;
-        val = parse_line(lines, cellHolder(cell.value, cell.lineNum));
-        cell.value *= int(val) if isint(val) else ord(val[0]);
-      else:
-        cell.value *= int(l[-1]) if isint(l[-1]) else ord(l[-1]);
+      val = get_val(l[-1], lines, cell);
+      cell.value *= int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
     else:
       cell.value *= cell.value;
   elif l.startswith('/'):
     if len(l) > 1:
-      if l[-1] == 'v':
-        cell.lineNum += 1;
-        val = parse_line(lines, cellHolder(cell.value, cell.lineNum));
-        cell.value /= int(val) if isint(val) else ord(val[0]);
-      else:
-        cell.value /= int(l[-1]) if isint(l[-1]) else ord(l[-1]);
+      val = get_val(l[-1], lines, cell);
+      cell.value /= int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
     else:
       cell.value /= cell.value;
   elif isint(l):
     return int(l);
   elif l.startswith('?'):
-    if l[-1] == '^':
-      if not parse_line(lines, cellHolder(cell.value, cell.lineNum - 1)):
-        cell.lineNum += 1;
-  elif l.startswith('!'):
-    if l[-1] == '^':
-      if parse_line(lines, cellHolder(cell.value, cell.lineNum - 1)):
-        cell.lineNum += 1;
-  elif l.startswith('$'):
-    if l[-1] == '^':
-      val = parse_line(lines, cellHolder(cell.value, cell.lineNum - 1));
-      return cell.value in val;
-  elif l.startswith('#'):
-    if l[-1] == '#':
-      print(cell.value);
-    elif l[-1] == 'v':
+    val = get_val(l[-1], lines, cell);
+    if not val:
       cell.lineNum += 1;
-      val = parse_line(lines, cell);
+  elif l.startswith('!'):
+    val = get_val(l[-1], lines, cell);
+    if val:
+      cell.lineNum += 1;
+  elif l.startswith('$'):
+    val = get_val(l[-1], lines, cell);
+    return cell.value in val;
+  elif l.startswith('#'):
+    if len(l) > 1:
+      val = get_val(l[-1], lines, cell);
       print(val);
       return val;
-    elif l[-1] == '^':
-      val = parse_line(lines, cellHolder(cell.value, cell.lineNum - 1));
-      print(val);
-      return val;
+    else:
+      print(cell.value);
+      return cell.value);
   elif l.startswith('^'):
     val = parse_line(lines, cellHolder(cell.value, cell.lineNum - 1));
     return val;

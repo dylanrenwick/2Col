@@ -60,7 +60,16 @@ def parse_line(lines, cell):
   l = lines[cell.lineNum];
   if ' ' in l:
     l = l.strip();
-  if l.startswith('+'):
+  if l == "Sq":
+    return not (cell.value**.5%1);
+  elif l == "F!":
+    val = [];
+    for i in range(0, cell.value):
+      val.append(math.factorial(i + 1));
+    return val;
+  elif l == "HW":
+    return "Hello, World!";
+  elif l.startswith('+'):
     if len(l) > 1:
       val = get_val(l[-1], lines, cell);
       cell.value += int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
@@ -84,6 +93,10 @@ def parse_line(lines, cell):
       cell.value /= int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
     else:
       cell.value /= cell.value;
+  elif l.startswith('='):
+    if len(l) > 1:
+      val = get_val(l[-1], lines, cell);
+      cell.value = int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
   elif isint(l):
     return int(l);
   elif l.startswith('?'):
@@ -104,20 +117,12 @@ def parse_line(lines, cell):
       return val;
     else:
       print(cell.value);
-      return cell.value);
   elif l.startswith('^'):
     val = parse_line(lines, cellHolder(cell.value, cell.lineNum - 1));
     return val;
   elif l.startswith('v'):
     cell.lineNum += 1;
     val = parse_line(lines, cell);
-    return val;
-  elif l == "Sq":
-    return not (cell.value**.5%1);
-  elif l == "F!":
-    val = [];
-    for i in range(0, cell.value + 1):
-      val.append(math.factorial(i));
     return val;
   else:
     return int(l) if isint(l) else ord(l[0]);
@@ -135,10 +140,11 @@ def parse(code):
   global cell;
   if len(argv) > 3:
     cell.value = int(argv[3]) if isint(argv[3]) else ord(argv[3][0]);
+  retval = 0;
   while cell.lineNum < len(source):
-    parse_line(source, cell);
+    retval = parse_line(source, cell);
     cell.lineNum += 1;
-  #print(cell.value);
+  print(retval);
 
 if len(argv) < 3:
   print('Invalid args!');

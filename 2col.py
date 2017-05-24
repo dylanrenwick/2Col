@@ -15,7 +15,8 @@ class cellHolder:
     self.value = cellData;
     self.lineNum = line;
 
-cell = cellHolder(0, 0);
+cell  = cellHolder(0, 0);
+loops = dict();
 
 def isint(s):
   try:
@@ -54,9 +55,24 @@ def get_val(valCode, lines, cell):
     return(parse_line(lines, cellHolder(cell.value, cell.lineNum - 1)));
   elif isint(valCode):
     return int(valCode);
+  else:
+    return ord(valCode);
 
+def find_end(lines):
+  forCount = 0;
+  for x in range(0, len(lines)):
+    if lines[x] == 'Ed':
+      if forCount > 0:
+        forCount -= 1;
+      else:
+        return (lines[:-x], x + 1);
+    elif lines[x].startswith('F') and lines[x] != 'F!':
+      forCount += 1;
 
 def parse_line(lines, cell):
+  global loops;
+  if cell.lineNum < 0 or cell.lineNum >= len(lines):
+    return 0;
   l = lines[cell.lineNum];
   if ' ' in l:
     l = l.strip();
@@ -69,34 +85,38 @@ def parse_line(lines, cell):
     return val;
   elif l == "HW":
     return "Hello, World!";
+  elif l == "In":
+    return input();
+  elif l == "Ed":
+    return 0;
   elif l.startswith('+'):
     if len(l) > 1:
       val = get_val(l[-1], lines, cell);
-      cell.value += int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
+      cell.value += int(val) if isint(val) else (sum(val) if type(val) is list else ord(val[0]));
     else:
       cell.value += cell.value;
   elif l.startswith('-'):
     if len(l) > 1:
       val = get_val(l[-1], lines, cell);
-      cell.value -= int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
+      cell.value -= int(val) if isint(val) else (sum(val) if type(val) is list else ord(val[0]));
     else:
       cell.value -= cell.value;
   elif l.startswith('*'):
     if len(l) > 1:
       val = get_val(l[-1], lines, cell);
-      cell.value *= int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
+      cell.value *= int(val) if isint(val) else (sum(val) if type(val) is list else ord(val[0]));
     else:
       cell.value *= cell.value;
   elif l.startswith('/'):
     if len(l) > 1:
       val = get_val(l[-1], lines, cell);
-      cell.value /= int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
+      cell.value /= int(val) if isint(val) else (sum(val) if type(val) is list else ord(val[0]));
     else:
       cell.value /= cell.value;
   elif l.startswith('='):
     if len(l) > 1:
       val = get_val(l[-1], lines, cell);
-      cell.value = int(val) if isint(val) else (sum(val) if val is list else ord(val[0]));
+      cell.value = int(val) if isint(val) else (sum(val) if type(val) is list else ord(val[0]));
   elif isint(l):
     return int(l);
   elif l.startswith('?'):
@@ -117,6 +137,36 @@ def parse_line(lines, cell):
       return val;
     else:
       print(cell.value);
+  elif l.startswith('d'):
+    if len(l) > 1:
+      val = get_val(l[-1], lines, cell);
+    else:
+      val = cell.value;
+    rand = random.randint(1, val);
+    print(rand);
+    return rand;
+  elif l.startswith('D'):
+    if len(l) > 1:
+      val = get_val(l[-1], lines, cell);
+    else:
+      val = cell.value;
+    ret = [];
+    for i in range(val, 0):
+      ret.append(i);
+    return ret;
+  elif l.startswith('F'):
+    if len(l) > 1:
+      val = get_val(l[-1], lines, cell);
+    else:
+      val = cell.value;
+    end = find_end(lines[cell.lineNum+1:]);
+    if type(val) is list:
+      for x in val:
+        parse('\n'.join(end[0]), cellHolder(x, 0));
+    else:
+      for x in range(0, val):
+        parse('\n'.join(end[0]), cellHolder(x, 0));
+    cell.lineNum += end[1];
   elif l.startswith('^'):
     val = parse_line(lines, cellHolder(cell.value, cell.lineNum - 1));
     return val;
@@ -129,7 +179,7 @@ def parse_line(lines, cell):
 
   return cell.value;
 
-def parse(code):
+def parse(code, cell):
   #print('Parsing %s' % code);
   source = code.split('\n');
   for l in source:
@@ -137,7 +187,6 @@ def parse(code):
       print('Invalid code!');
       print("The following line is not valid 2Col: '%s'" % l);
       return;
-  global cell;
   if len(argv) > 3:
     cell.value = int(argv[3]) if isint(argv[3]) else ord(argv[3][0]);
   retval = 0;
@@ -156,16 +205,16 @@ source = argv[2];
 
 if mode == '-f':
   filename = source;
+  global cell;
   if os.path.isfile(filename):
     with open(source) as f:
       source = f.read();
-    parse(source);
+    parse(source, cell);
   else:
     print('File %s not found!' % filename);
     exit();
-
 elif mode == '-c':
-  parse(source);
+  parse(source, cell);
 else:
   print('Invalid flag!');
   exit();
